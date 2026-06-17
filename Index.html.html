@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ShopFinance</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --primary:#2563eb;--primary-light:#dbeafe;--primary-dark:#1d4ed8;
+    --success:#16a34a;--success-light:#dcfce7;
+    --danger:#dc2626;--danger-light:#fee2e2;
+    --warning:#d97706;--warning-light:#fef3c7;
+    --bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;
+    --border:#e2e8f0;--border2:#cbd5e1;
+    --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+    --radius:12px;--radius-sm:8px;--shadow:0 1px 3px rgba(0,0,0,.08);
+    --nav-h:60px;--header-h:56px;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Noto Sans Lao,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;overflow-x:hidden;min-height:100vh;padding-bottom:calc(var(--nav-h)+16px)}
+  nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0)}
+  nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:var(--text3);font-size:9px;font-weight:500;padding:4px 2px;cursor:pointer;transition:color .15s;border-radius:var(--radius-sm)}
+  nav button.active{color:var(--primary)}
+  nav button i{font-size:22px}
+  header{background:var(--surface);border-bottom:1px solid var(--border);height:var(--header-h);display:flex;align-items:center;padding:0 16px;gap:12px;position:sticky;top:0;z-index:50}
+  header h1{font-size:17px;font-weight:600;flex:1}
+  .page{display:none;padding:16px;min-height:calc(100vh - var(--header-h) - var(--nav-h))}
+  .page.active{display:block}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+  .card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px}
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+  .metric-label{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+  .metric-val{font-size:20px;font-weight:700;color:var(--text)}
+  .metric-sub{font-size:11px;color:var(--text3);margin-top:2px}
+  .metric.income .metric-val{color:var(--success)}
+  .metric.expense .metric-val{color:var(--danger)}
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:14px;outline:none;transition:border .15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary)}
+  textarea{resize:vertical;min-height:70px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:var(--radius-sm);border:none;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
+  .btn:active{opacity:.8}
+  .btn-primary{background:var(--primary);color:#fff;width:100%;justify-content:center}
+  .btn-success{background:var(--success);color:#fff;width:100%;justify-content:center}
+  .btn-danger{background:var(--danger);color:#fff}
+  .btn-outline{background:none;border:1px solid var(--border2);color:var(--text);flex:1;justify-content:center}
+  .btn-sm{padding:6px 12px;font-size:12px;border-radius:6px}
+  .tabs{display:flex;background:var(--surface2);border-radius:var(--radius-sm);padding:3px;margin-bottom:16px}
+  .tab{flex:1;padding:7px 4px;border:none;background:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .15s}
+  .tab.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow)}
+  .txn-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .txn-item:last-child{border-bottom:none}
+  .txn-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .txn-icon.income{background:var(--success-light);color:var(--success)}
+  .txn-icon.expense{background:var(--danger-light);color:var(--danger)}
+  .txn-info{flex:1;min-width:0}
+  .txn-name{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .txn-date{font-size:11px;color:var(--text3);margin-top:1px}
+  .txn-cat{font-size:10px;background:var(--surface2);color:var(--text2);padding:2px 6px;border-radius:4px;margin-top:2px;display:inline-block}
+  .txn-amount{font-weight:700;font-size:14px;text-align:right;white-space:nowrap}
+  .txn-amount.income{color:var(--success)}
+  .txn-amount.expense{color:var(--danger)}
+  .prod-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .prod-item:last-child{border-bottom:none}
+  .prod-icon{width:38px;height:38px;border-radius:10px;background:var(--primary-light);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .prod-info{flex:1;min-width:0}
+  .prod-name{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prod-meta{font-size:11px;color:var(--text3);margin-top:2px}
+  .prod-price .price{font-weight:700;font-size:14px;color:var(--primary-dark)}
+  .stock-ok{color:var(--success)}
+  .stock-low{color:var(--warning)}
+  .stock-out{color:var(--danger)}
+  .chart-wrap{position:relative;width:100%;height:200px;margin-bottom:8px}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:20px 16px;width:100%;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .25s}
+  .modal-overlay.open .modal{transform:translateY(0)}
+  .modal-header{display:flex;align-items:center;margin-bottom:16px}
+  .modal-title{font-size:17px;font-weight:700;flex:1}
+  .modal-close{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:4px;line-height:1}
+  .empty{text-align:center;padding:40px 20px;color:var(--text3)}
+  .empty i{font-size:48px;margin-bottom:12px;display:block;opacity:.4}
+  .empty p{font-size:13px}
+  .section-label{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--text3);margin:16px 0 8px}
+  .del-btn{background:none;border:none;color:var(--text3);padding:6px;cursor:pointer;border-radius:6px}
+  .del-btn:active{background:var(--danger-light);color:var(--danger)}
+  .search-wrap{position:relative;margin-bottom:12px}
+  .search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none}
+  .search-wrap input{padding-left:36px}
+  .summary-bar{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+  .summary-bar-item{flex:1;padding:12px 6px;text-align:center;border-right:1px solid var(--border)}
+  .summary-bar-item:last-child{border-right:none}
+  .summary-bar-val{font-weight:700;font-size:14px}
+  .summary-bar-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+  .export-row{display:flex;gap:8px;margin-bottom:16px}
+  .export-row .btn{flex:1}
+  .filter-row{display:flex;gap:8px;margin-bottom:12px}
+  .filter-row select{flex:1}
+</style>
+</head>
+<body>
+
+<header>
+  <i class="ti ti-building-store" style="font-size:22px;color:var(--primary)" aria-hidden="true"></i>
+  <h1 id="page-title">ໜ້າຫຼັກ</h1>
+  <button class="btn btn-primary btn-sm" id="header-add-btn" onclick="openAddModal()" style="width:auto;display:none">
+    <i class="ti ti-plus"></i> ເພີ່ມ
+  </button>
+</header>
+
+<div id="page-dashboard" class="page active">
+  <div class="metric-grid">
+    <div class="metric income"><div class="metric-label">ລາຍຮັບ</div><div class="metric-val" id="dash-income">₭0</div><div class="metric-sub" id="dash-income-count">0 ລາຍການ</div></div>
+    <div class="metric expense"><div class="metric-label">ລາຍຈ່າຍ</div><div class="metric-val" id="dash-expense">₭0</div><div class="metric-sub" id="dash-expense-count">0 ລາຍການ</div></div>
+  </div>
+  <div class="metric" style="margin-bottom:16px">
+    <div class="metric-label">ກຳໄລສຸດທິ</div>
+    <div class="metric-val" id="dash-profit" style="color:var(--primary)">₭0</div>
+    <div class="metric-sub" id="dash-margin">ອັດຕາກຳໄລ: 0%</div>
+  </div>
+  <div class="section-label">ລາຍຮັບ vs ລາຍຈ່າຍ (6 ເດືອນລ່າສຸດ)</div>
+  <div class="card-sm" style="margin-bottom:16px">
+    <div class="chart-wrap"><canvas id="barChart" role="img" aria-label="ກຣາບລາຍຮັບລາຍຈ່າຍລາຍເດືອນ">ສຽງກຽວກັບລາຍຮັບ ແລະ ລາຍຈ່າຍ.</canvas></div>
+  </div>
+  <div class="section-label">ສັດສ່ວນລາຍຈ່າຍ</div>
+  <div class="card-sm" style="margin-bottom:16px">
+    <div class="chart-wrap"><canvas id="pieChart" role="img" aria-label="ກຣາບວົງກົມປະເພດລາຍຈ່າຍ">ສຽງກ່ຽວກັບໝວດລາຍຈ່າຍ.</canvas></div>
+  </div>
+  <div class="section-label">ລາຍການລ່າສຸດ</div>
+  <div class="card" id="dash-recent"></div>
+</div>
+
+<div id="page-income" class="page">
+  <div class="summary-bar">
+    <div class="summary-bar-item"><div class="summary-bar-val" id="inc-total" style="color:var(--success)">₭0</div><div class="summary-bar-lbl">ລວມທັງໝົດ</div></div>
+    <div class="summary-bar-item"><div class="summary-bar-val" id="inc-count">0</div><div class="summary-bar-lbl">ລາຍການ</div></div>
+    <div class="summary-bar-item"><div class="summary-bar-val" id="inc-avg">₭0</div><div class="summary-bar-lbl">ສະເລ່ຍ</div></div>
+  </div>
+  <div class="filter-row">
+    <select id="inc-filter-cat" onchange="renderIncomeList()"><option value="">ທຸກໝວດ</option></select>
+    <select id="inc-filter-month" onchange="renderIncomeList()"><option value="">ທຸກເດືອນ</option></select>
+  </div>
+  <div id="income-list"></div>
+</div>
+
+<div id="page-expense" class="page">
+  <div class="summary-bar">
+    <div class="summary-bar-item"><div class="summary-bar-val" id="exp-total" style="color:var(--danger)">₭0</div><div class="summary-bar-lbl">ລວມທັງໝົດ</div></div>
+    <div class="summary-bar-item"><div class="summary-bar-val" id="exp-count">0</div><div class="summary-bar-lbl">ລາຍການ</div></div>
+    <div class="summary-bar-item"><div class="summary-bar-val" id="exp-avg">₭0</div><div class="summary-bar-lbl">ສະເລ່ຍ</div></div>
+  </div>
+  <div class="filter-row">
+    <select id="exp-filter-cat" onchange="renderExpenseList()"><option value="">ທຸກໝວດ</option></select>
+    <select id="exp-filter-month" onchange="renderExpenseList()"><option value="">ທຸກເດືອນ</option></select>
+  </div>
+  <div id="expense-list"></div>
+</div>
+
+<div id="page-products" class="page">
+  <div class="summary-bar">
+    <div class="summary-bar-item"><div class="summary-bar-val" id="prod-count">0</div><div class="summary-bar-lbl">ສິນຄ້າ</div></div>
+    <div class="summary-bar-item"><div class="summary-bar-val" id="prod-value">₭0</div><div class="summary-bar-lbl">ມູນຄ່າສາງ</div></div>
+    <div class="summary-bar-item"><div class="summary-bar-val" id="prod-low">0</div><div class="summary-bar-lbl">ໃກ້ໝົດ</div></div>
+  </div>
+  <div class="search-wrap"><i class="ti ti-search" aria-hidden="true"></i><input type="text" id="prod-search" placeholder="ຄົ້ນຫາສິນຄ້າ…" oninput="renderProductList()"></div>
+  <div class="filter-row">
+    <select id="prod-filter-cat" onchange="renderProductList()"><option value="">ທຸກໝວດ</option></select>
+  </div>
+  <div id="product-list"></div>
+</div>
+
+<div id="page-report" class="page">
+  <div class="tabs">
+    <button class="tab active" onclick="switchReportTab('summary',this)">ສະຫຼຸບ</button>
+    <button class="tab" onclick="switchReportTab('income',this)">ລາຍຮັບ</button>
+    <button class="tab" onclick="switchReportTab('expense',this)">ລາຍຈ່າຍ</button>
+    <button class="tab" onclick="switchReportTab('products',this)">ສິນຄ້າ</button>
+  </div>
+  <div class="filter-row" style="margin-bottom:16px">
+    <select id="rpt-month" onchange="renderReport()"><option value="">ທຸກເດືອນ</option></select>
+    <select id="rpt-year" onchange="renderReport()"><option value="">ທຸກປີ</option></select>
+  </div>
+  <div class="export-row">
+    <button class="btn btn-outline" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+    <button class="btn btn-outline" onclick="exportPDF()"><i class="ti ti-file-type-pdf"></i> PDF</button>
+  </div>
+  <div id="report-content"></div>
+</div>
+
+<nav>
+  <button class="active" onclick="switchPage('dashboard',this)" id="nav-dashboard">
+    <i class="ti ti-layout-dashboard" aria-hidden="true"></i>ໜ້າຫຼັກ
+  </button>
+  <button onclick="switchPage('income',this)" id="nav-income">
+    <i class="ti ti-trending-up" aria-hidden="true"></i>ລາຍຮັບ
+  </button>
+  <button onclick="switchPage('expense',this)" id="nav-expense">
+    <i class="ti ti-trending-down" aria-hidden="true"></i>ລາຍຈ່າຍ
+  </button>
+  <button onclick="switchPage('products',this)" id="nav-products">
+    <i class="ti ti-package" aria-hidden="true"></i>ສິນຄ້າ
+  </button>
+  <button onclick="switchPage('report',this)" id="nav-report">
+    <i class="ti ti-report-analytics" aria-hidden="true"></i>ລາຍງານ
+  </button>
+</nav>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOverlay(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+const DB={
+  load:function(k){try{return JSON.parse(localStorage.getItem(k))||[]}catch(e){return[]}},
+  save:function(k,v){localStorage.setItem(k,JSON.stringify(v))}
+};
+var income   = DB.load('sf_income');
+var expenses = DB.load('sf_expenses');
+var products = DB.load('sf_products');
+
+var INCOME_CATS  = ['ຂາຍສິນຄ້າ','ໃຫ້ບໍລິການ','ໃຫ້ເຊົ່າ','ການລົງທຶນ','ອື່ນໆ'];
+var EXPENSE_CATS = ['ຊື້ສິນຄ້າ','ເງິນເດືອນ','ຄ່າເຊົ່າ','ສາທາລະນູປະໂພກ','ໂຄສະນາ','ຂົນສົ່ງ','ອຸປະກອນ','ບຳລຸງຮັກສາ','ອື່ນໆ'];
+var PRODUCT_CATS = ['ເອເລັກໂທຣນິກ','ອາຫານ ແລະ ເຄື່ອງດື່ມ','ເຄື່ອງນຸ່ງ','ສຸຂະພາບ','ຫ້ອງການ','ເຄື່ອງທຳຄວາມສະອາດ','ອື່ນໆ'];
+
+function save(){DB.save('sf_income',income);DB.save('sf_expenses',expenses);DB.save('sf_products',products)}
+
+function fmt(n){
+  var num=Number(n)||0;
+  return '\u20AD'+num.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function today(){return new Date().toISOString().slice(0,10)}
+function fmtDate(d){return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+function monthLabel(k){var parts=k.split('-');return new Date(parts[0],parts[1]-1).toLocaleDateString('en-US',{month:'short',year:'numeric'})}
+
+var currentPage='dashboard';
+var barChartInst=null;
+var pieChartInst=null;
+
+var PAGE_TITLES={dashboard:'ໜ້າຫຼັກ',income:'ລາຍຮັບ',expense:'ລາຍຈ່າຍ',products:'ສິນຄ້າ',report:'ລາຍງານ'};
+
+function switchPage(p,btn){
+  document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});
+  document.querySelectorAll('nav button').forEach(function(e){e.classList.remove('active')});
+  document.getElementById('page-'+p).classList.add('active');
+  if(btn) btn.classList.add('active');
+  currentPage=p;
+  document.getElementById('page-title').textContent=PAGE_TITLES[p];
+  var ab=document.getElementById('header-add-btn');
+  if(p==='income'||p==='expense'||p==='products'){
+    ab.style.display='';
+    ab.innerHTML='<i class="ti ti-plus"></i> ເພີ່ມ';
+  } else {
+    ab.style.display='none';
+  }
+  if(p==='dashboard') renderDashboard();
+  if(p==='income') renderIncomeList();
+  if(p==='expense') renderExpenseList();
+  if(p==='products') renderProductList();
+  if(p==='report') renderReport();
+  window.scrollTo(0,0);
+}
+
+function openAddModal(){
+  if(currentPage==='income') showIncomeModal(null);
+  else if(currentPage==='expense') showExpenseModal(null);
+  else if(currentPage==='products') showProductModal(null);
+}
+function openModal(html){
+  document.getElementById('modal-content').innerHTML=html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open')}
+function closeModalOverlay(e){if(e.target===document.getElementById('modal-overlay'))closeModal()}
+
+function showIncomeModal(id){
+  var rec=id?income.find(function(x){return x.id===id}):null;
+  var catOpts=INCOME_CATS.map(function(c){return '<option'+(rec&&rec.category===c?' selected':'')+'>'+c+'</option>'}).join('');
+  openModal(
+    '<div class="modal-header">' +
+      '<span class="modal-title">'+(rec?'ແກ້ໄຂ':'ເພີ່ມ')+' ລາຍຮັບ</span>' +
+      '<button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>' +
+    '</div>' +
+    '<div class="form-group"><label>ລາຍລະອຽດ *</label><input id="m-desc" value="'+(rec?rec.description:'')+'" placeholder="ເຊັ່ນ: ຍອດຂາຍປະຈຳວັນ"></div>' +
+    '<div class="form-group"><label>ຈຳນວນເງິນ (₭) *</label><input id="m-amount" type="number" min="0" step="1" value="'+(rec?rec.amount:'')+'"></div>' +
+    '<div class="form-group"><label>ໝວດ</label><select id="m-cat">'+catOpts+'</select></div>' +
+    '<div class="form-group"><label>ວັນທີ</label><input id="m-date" type="date" value="'+(rec?rec.date:today())+'"></div>' +
+    '<div class="form-group"><label>ໝາຍເຫດ</label><textarea id="m-note">'+(rec?rec.note:'')+'</textarea></div>' +
+    '<button class="btn btn-success" onclick="saveIncome(\''+(id||'')+'\')"><i class="ti ti-check"></i> ບັນທຶກລາຍຮັບ</button>'
+  );
+}
+function saveIncome(id){
+  var desc=document.getElementById('m-desc').value.trim();
+  var amount=parseFloat(document.getElementById('m-amount').value);
+  if(!desc||isNaN(amount)||amount<=0){alert('ກະລຸນາປ້ອນລາຍລະອຽດ ແລະ ຈຳນວນເງິນທີ່ຖືກຕ້ອງ');return}
+  var rec={id:id||uid(),description:desc,amount:amount,category:document.getElementById('m-cat').value,date:document.getElementById('m-date').value,note:document.getElementById('m-note').value.trim()};
+  if(id){var idx=income.findIndex(function(x){return x.id===id});income[idx]=rec}else income.push(rec);
+  save();closeModal();renderIncomeList();if(currentPage==='dashboard')renderDashboard();
+}
+function deleteIncome(id){if(!confirm('ລຶບລາຍການນີ້ບໍ?'))return;income=income.filter(function(x){return x.id!==id});save();renderIncomeList()}
+
+function showExpenseModal(id){
+  var rec=id?expenses.find(function(x){return x.id===id}):null;
+  var catOpts=EXPENSE_CATS.map(function(c){return '<option'+(rec&&rec.category===c?' selected':'')+'>'+c+'</option>'}).join('');
+  openModal(
+    '<div class="modal-header">' +
+      '<span class="modal-title">'+(rec?'ແກ້ໄຂ':'ເພີ່ມ')+' ລາຍຈ່າຍ</span>' +
+      '<button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>' +
+    '</div>' +
+    '<div class="form-group"><label>ລາຍລະອຽດ *</label><input id="m-desc" value="'+(rec?rec.description:'')+'" placeholder="ເຊັ່ນ: ຊຳລະເງິນຜູ້ສະໜອງ"></div>' +
+    '<div class="form-group"><label>ຈຳນວນເງິນ (₭) *</label><input id="m-amount" type="number" min="0" step="1" value="'+(rec?rec.amount:'')+'"></div>' +
+    '<div class="form-group"><label>ໝວດ</label><select id="m-cat">'+catOpts+'</select></div>' +
+    '<div class="form-group"><label>ວັນທີ</label><input id="m-date" type="date" value="'+(rec?rec.date:today())+'"></div>' +
+    '<div class="form-group"><label>ໝາຍເຫດ</label><textarea id="m-note">'+(rec?rec.note:'')+'</textarea></div>' +
+    '<button class="btn btn-danger" onclick="saveExpense(\''+(id||'')+'\')"><i class="ti ti-check"></i> ບັນທຶກລາຍຈ່າຍ</button>'
+  );
+}
+function saveExpense(id){
+  var desc=document.getElementById('m-desc').value.trim();
+  var amount=parseFloat(document.getElementById('m-amount').value);
+  if(!desc||isNaN(amount)||amount<=0){alert('ກະລຸນາປ້ອນລາຍລະອຽດ ແລະ ຈຳນວນເງິນທີ່ຖືກຕ້ອງ');return}
+  var rec={id:id||uid(),description:desc,amount:amount,category:document.getElementById('m-cat').value,date:document.getElementById('m-date').value,note:document.getElementById('m-note').value.trim()};
+  if(id){var idx=expenses.findIndex(function(x){return x.id===id});expenses[idx]=rec}else expenses.push(rec);
+  save();closeModal();renderExpenseList();if(currentPage==='dashboard')renderDashboard();
+}
+function deleteExpense(id){if(!confirm('ລຶບລາຍການນີ້ບໍ?'))return;expenses=expenses.filter(function(x){return x.id!==id});save();renderExpenseList()}
+
+function showProductModal(id){
+  var rec=id?products.find(function(x){return x.id===id}):null;
+  var catOpts=PRODUCT_CATS.map(function(c){return '<option'+(rec&&rec.category===c?' selected':'')+'>'+c+'</option>'}).join('');
+  openModal(
+    '<div class="modal-header">' +
+      '<span class="modal-title">'+(rec?'ແກ້ໄຂ':'ເພີ່ມ')+' ສິນຄ້າ</span>' +
+      '<button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>' +
+    '</div>' +
+    '<div class="form-group"><label>ຊື່ສິນຄ້າ *</label><input id="m-name" value="'+(rec?rec.name:'')+'" placeholder="ເຊັ່ນ: ກາເຟ 500g"></div>' +
+    '<div class="form-group"><label>ລະຫັດສິນຄ້າ</label><input id="m-sku" value="'+(rec?rec.sku:'')+'" placeholder="ເຊັ່ນ: SKU-001"></div>' +
+    '<div class="form-group"><label>ໝວດ</label><select id="m-cat">'+catOpts+'</select></div>' +
+    '<div class="form-group"><label>ລາຄາທຶນ (₭) *</label><input id="m-cost" type="number" min="0" step="1" value="'+(rec?rec.cost:'')+'"></div>' +
+    '<div class="form-group"><label>ລາຄາຂາຍ (₭) *</label><input id="m-price" type="number" min="0" step="1" value="'+(rec?rec.price:'')+'"></div>' +
+    '<div class="form-group"><label>ຈຳນວນໃນສາງ *</label><input id="m-stock" type="number" min="0" step="1" value="'+(rec?rec.stock:'')+'"></div>' +
+    '<div class="form-group"><label>ແຈ້ງເຕືອນສາງຕ່ຳ</label><input id="m-minstock" type="number" min="0" step="1" value="'+(rec?rec.minStock:5)+'" placeholder="5"></div>' +
+    '<div class="form-group"><label>ໜ່ວຍ</label><input id="m-unit" value="'+(rec?rec.unit:'ອັນ')+'" placeholder="ອັນ / ກິໂລ / ກ່ອງ …"></div>' +
+    '<button class="btn btn-primary" onclick="saveProduct(\''+(id||'')+'\')"><i class="ti ti-check"></i> ບັນທຶກສິນຄ້າ</button>'
+  );
+}
+function saveProduct(id){
+  var name=document.getElementById('m-name').value.trim();
+  var cost=parseFloat(document.getElementById('m-cost').value);
+  var price=parseFloat(document.getElementById('m-price').value);
+  var stock=parseInt(document.getElementById('m-stock').value);
+  if(!name||isNaN(cost)||isNaN(price)||isNaN(stock)){alert('ກະລຸນາຕື່ມຂໍ້ມູນທີ່ຈຳເປັນ');return}
+  var rec={id:id||uid(),name:name,sku:document.getElementById('m-sku').value.trim(),category:document.getElementById('m-cat').value,cost:cost,price:price,stock:stock,minStock:parseInt(document.getElementById('m-minstock').value)||5,unit:document.getElementById('m-unit').value.trim()||'ອັນ'};
+  if(id){var idx=products.findIndex(function(x){return x.id===id});products[idx]=rec}else products.push(rec);
+  save();closeModal();renderProductList();
+}
+function deleteProduct(id){if(!confirm('ລຶບສິນຄ້ານີ້ບໍ?'))return;products=products.filter(function(x){return x.id!==id});save();renderProductList()}
+
+function renderDashboard(){
+  var totalInc=income.reduce(function(a,x){return a+x.amount},0);
+  var totalExp=expenses.reduce(function(a,x){return a+x.amount},0);
+  var profit=totalInc-totalExp;
+  var margin=totalInc>0?((profit/totalInc)*100).toFixed(1):0;
+  document.getElementById('dash-income').textContent=fmt(totalInc);
+  document.getElementById('dash-expense').textContent=fmt(totalExp);
+  document.getElementById('dash-profit').textContent=fmt(profit);
+  document.getElementById('dash-income-count').textContent=income.length+' ລາຍການ';
+  document.getElementById('dash-expense-count').textContent=expenses.length+' ລາຍການ';
+  document.getElementById('dash-margin').textContent='ອັດຕາກຳໄລ: '+margin+'%';
+  document.getElementById('dash-profit').style.color=profit>=0?'var(--success)':'var(--danger)';
+  renderBarChart();
+  renderPieChart();
+  renderRecentTransactions();
+}
+
+function getLast6Months(){
+  var months=[];
+  var now=new Date();
+  for(var i=5;i>=0;i--){
+    var d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push(d.toISOString().slice(0,7));
+  }
+  return months;
+}
+
+function renderBarChart(){
+  var months=getLast6Months();
+  var incData=months.map(function(m){return income.filter(function(x){return x.date.slice(0,7)===m}).reduce(function(a,x){return a+x.amount},0)});
+  var expData=months.map(function(m){return expenses.filter(function(x){return x.date.slice(0,7)===m}).reduce(function(a,x){return a+x.amount},0)});
+  var labels=months.map(function(m){var p=m.split('-');return new Date(p[0],p[1]-1).toLocaleDateString('en-US',{month:'short'})});
+  if(barChartInst)barChartInst.destroy();
+  barChartInst=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels:labels,datasets:[
+      {label:'ລາຍຮັບ',data:incData,backgroundColor:'#bbf7d0',borderColor:'#16a34a',borderWidth:1.5,borderRadius:4},
+      {label:'ລາຍຈ່າຍ',data:expData,backgroundColor:'#fecaca',borderColor:'#dc2626',borderWidth:1.5,borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{ticks:{callback:function(v){return '\u20AD'+v.toLocaleString()},font:{size:9}},grid:{color:'rgba(0,0,0,.05)'}}}}
+  });
+}
+
+function renderPieChart(){
+  var catTotals={};
+  expenses.forEach(function(x){catTotals[x.category]=(catTotals[x.category]||0)+x.amount});
+  var labels=Object.keys(catTotals);
+  var data=Object.values(catTotals);
+  var colors=['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316'];
+  if(pieChartInst)pieChartInst.destroy();
+  var canvas=document.getElementById('pieChart');
+  if(!canvas)return;
+  if(labels.length===0){canvas.parentElement.innerHTML='<div class="empty"><i class="ti ti-chart-pie"></i><p>ຍັງບໍ່ມີຂໍ້ມູນລາຍຈ່າຍ</p></div>';return}
+  pieChartInst=new Chart(canvas,{
+    type:'doughnut',
+    data:{labels:labels,datasets:[{data:data,backgroundColor:colors.slice(0,labels.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8,boxWidth:10}}}}
+  });
+}
+
+function renderRecentTransactions(){
+  var all=income.map(function(x){return Object.assign({},x,{type:'income'})})
+    .concat(expenses.map(function(x){return Object.assign({},x,{type:'expense'})}))
+    .sort(function(a,b){return b.date.localeCompare(a.date)}).slice(0,5);
+  var el=document.getElementById('dash-recent');
+  if(!all.length){el.innerHTML='<div class="empty"><i class="ti ti-receipt"></i><p>ຍັງບໍ່ມີລາຍການ</p></div>';return}
+  el.innerHTML=all.map(function(x){
+    return '<div class="txn-item">'+
+      '<div class="txn-icon '+x.type+'"><i class="ti ti-'+(x.type==='income'?'trending-up':'trending-down')+'" aria-hidden="true"></i></div>'+
+      '<div class="txn-info"><div class="txn-name">'+x.description+'</div><div class="txn-date">'+fmtDate(x.date)+'</div><span class="txn-cat">'+x.category+'</span></div>'+
+      '<div class="txn-amount '+x.type+'">'+(x.type==='income'?'+':'-')+fmt(x.amount)+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function populateFilters(){
+  var allDates=income.concat(expenses);
+  var months=allDates.map(function(x){return x.date.slice(0,7)}).filter(function(v,i,a){return a.indexOf(v)===i}).sort().reverse();
+  ['inc-filter-month','exp-filter-month','rpt-month'].forEach(function(id){
+    var sel=document.getElementById(id);if(!sel)return;
+    var cur=sel.value;
+    sel.innerHTML='<option value="">ທຸກເດືອນ</option>'+months.map(function(m){return '<option value="'+m+'"'+(m===cur?' selected':'')+'>'+monthLabel(m)+'</option>'}).join('');
+  });
+  var years=allDates.map(function(x){return x.date.slice(0,4)}).filter(function(v,i,a){return a.indexOf(v)===i}).sort().reverse();
+  var rptYear=document.getElementById('rpt-year');
+  if(rptYear){var curY=rptYear.value;rptYear.innerHTML='<option value="">ທຸກປີ</option>'+years.map(function(y){return '<option value="'+y+'"'+(y===curY?' selected':'')+'>'+y+'</option>'}).join('')}
+  var incCat=document.getElementById('inc-filter-cat');
+  if(incCat){var curC=incCat.value;incCat.innerHTML='<option value="">ທຸກໝວດ</option>'+INCOME_CATS.map(function(c){return '<option value="'+c+'"'+(c===curC?' selected':'')+'>'+c+'</option>'}).join('')}
+  var expCat=document.getElementById('exp-filter-cat');
+  if(expCat){var curE=expCat.value;expCat.innerHTML='<option value="">ທຸກໝວດ</option>'+EXPENSE_CATS.map(function(c){return '<option value="'+c+'"'+(c===curE?' selected':'')+'>'+c+'</option>'}).join('')}
+  var prodCat=document.getElementById('prod-filter-cat');
+  if(prodCat){var curP=prodCat.value;prodCat.innerHTML='<option value="">ທຸກໝວດ</option>'+PRODUCT_CATS.map(function(c){return '<option value="'+c+'"'+(c===curP?' selected':'')+'>'+c+'</option>'}).join('')}
+}
+
+function renderIncomeList(){
+  populateFilters();
+  var catF=document.getElementById('inc-filter-cat').value;
+  var monF=document.getElementById('inc-filter-month').value;
+  var data=income.filter(function(x){return(!catF||x.category===catF)&&(!monF||x.date.slice(0,7)===monF)}).sort(function(a,b){return b.date.localeCompare(a.date)});
+  var total=data.reduce(function(a,x){return a+x.amount},0);
+  document.getElementById('inc-total').textContent=fmt(total);
+  document.getElementById('inc-count').textContent=data.length;
+  document.getElementById('inc-avg').textContent=data.length?fmt(total/data.length):fmt(0);
+  var el=document.getElementById('income-list');
+  if(!data.length){el.innerHTML='<div class="empty"><i class="ti ti-trending-up"></i><p>ຍັງບໍ່ມີລາຍຮັບ.<br>ກົດ "+ ເພີ່ມ" ເພື່ອເລີ່ມ.</p></div>';return}
+  el.innerHTML='<div class="card">'+data.map(function(x){
+    return '<div class="txn-item">'+
+      '<div class="txn-icon income"><i class="ti ti-trending-up" aria-hidden="true"></i></div>'+
+      '<div class="txn-info"><div class="txn-name">'+x.description+'</div><div class="txn-date">'+fmtDate(x.date)+'</div><span class="txn-cat">'+x.category+'</span></div>'+
+      '<div style="display:flex;align-items:center;gap:4px">'+
+        '<div class="txn-amount income">+'+fmt(x.amount)+'</div>'+
+        '<button class="del-btn" onclick="showIncomeModal(\''+x.id+'\')" aria-label="ແກ້ໄຂ"><i class="ti ti-edit" style="font-size:16px"></i></button>'+
+        '<button class="del-btn" onclick="deleteIncome(\''+x.id+'\')" aria-label="ລຶບ"><i class="ti ti-trash" style="font-size:16px"></i></button>'+
+      '</div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+
+function renderExpenseList(){
+  populateFilters();
+  var catF=document.getElementById('exp-filter-cat').value;
+  var monF=document.getElementById('exp-filter-month').value;
+  var data=expenses.filter(function(x){return(!catF||x.category===catF)&&(!monF||x.date.slice(0,7)===monF)}).sort(function(a,b){return b.date.localeCompare(a.date)});
+  var total=data.reduce(function(a,x){return a+x.amount},0);
+  document.getElementById('exp-total').textContent=fmt(total);
+  document.getElementById('exp-count').textContent=data.length;
+  document.getElementById('exp-avg').textContent=data.length?fmt(total/data.length):fmt(0);
+  var el=document.getElementById('expense-list');
+  if(!data.length){el.innerHTML='<div class="empty"><i class="ti ti-trending-down"></i><p>ຍັງບໍ່ມີລາຍຈ່າຍ.<br>ກົດ "+ ເພີ່ມ" ເພື່ອເລີ່ມ.</p></div>';return}
+  el.innerHTML='<div class="card">'+data.map(function(x){
+    return '<div class="txn-item">'+
+      '<div class="txn-icon expense"><i class="ti ti-trending-down" aria-hidden="true"></i></div>'+
+      '<div class="txn-info"><div class="txn-name">'+x.description+'</div><div class="txn-date">'+fmtDate(x.date)+'</div><span class="txn-cat">'+x.category+'</span></div>'+
+      '<div style="display:flex;align-items:center;gap:4px">'+
+        '<div class="txn-amount expense">-'+fmt(x.amount)+'</div>'+
+        '<button class="del-btn" onclick="showExpenseModal(\''+x.id+'\')" aria-label="ແກ້ໄຂ"><i class="ti ti-edit" style="font-size:16px"></i></button>'+
+        '<button class="del-btn" onclick="deleteExpense(\''+x.id+'\')" aria-label="ລຶບ"><i class="ti ti-trash" style="font-size:16px"></i></button>'+
+      '</div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+
+function renderProductList(){
+  populateFilters();
+  var q=(document.getElementById('prod-search').value||'').toLowerCase();
+  var catF=document.getElementById('prod-filter-cat').value;
+  var data=products.filter(function(x){return(!q||x.name.toLowerCase().indexOf(q)>=0||x.sku.toLowerCase().indexOf(q)>=0)&&(!catF||x.category===catF)});
+  var totalVal=data.reduce(function(a,x){return a+x.cost*x.stock},0);
+  var lowCount=data.filter(function(x){return x.stock>0&&x.stock<=x.minStock}).length;
+  document.getElementById('prod-count').textContent=data.length;
+  document.getElementById('prod-value').textContent=fmt(totalVal);
+  document.getElementById('prod-low').textContent=lowCount;
+  var el=document.getElementById('product-list');
+  if(!data.length){el.innerHTML='<div class="empty"><i class="ti ti-package"></i><p>ຍັງບໍ່ມີສິນຄ້າ.<br>ກົດ "+ ເພີ່ມ" ເພື່ອເລີ່ມ.</p></div>';return}
+  el.innerHTML='<div class="card">'+data.map(function(x){
+    var stockClass='stock-ok',stockLabel='ມີໃນສາງ';
+    if(x.stock===0){stockClass='stock-out';stockLabel='ໝົດສາງ'}
+    else if(x.stock<=x.minStock){stockClass='stock-low';stockLabel='ໃກ້ໝົດ'}
+    var margin=x.price>0?(((x.price-x.cost)/x.price)*100).toFixed(0):0;
+    return '<div class="prod-item">'+
+      '<div class="prod-icon"><i class="ti ti-package" aria-hidden="true"></i></div>'+
+      '<div class="prod-info">'+
+        '<div class="prod-name">'+x.name+'</div>'+
+        '<div class="prod-meta">'+(x.sku?x.sku+' · ':'')+x.category+' · ກຳໄລ '+margin+'%</div>'+
+        '<span class="'+stockClass+'" style="font-size:11px;font-weight:500">'+stockLabel+': '+x.stock+' '+x.unit+'</span>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:4px">'+
+        '<div class="prod-price"><div class="price">'+fmt(x.price)+'</div><div class="prod-meta" style="font-size:10px">ທຶນ: '+fmt(x.cost)+'</div></div>'+
+        '<button class="del-btn" onclick="showProductModal(\''+x.id+'\')" aria-label="ແກ້ໄຂ"><i class="ti ti-edit" style="font-size:16px"></i></button>'+
+        '<button class="del-btn" onclick="deleteProduct(\''+x.id+'\')" aria-label="ລຶບ"><i class="ti ti-trash" style="font-size:16px"></i></button>'+
+      '</div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+
+var reportTab='summary';
+function switchReportTab(tab,btn){
+  reportTab=tab;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  btn.classList.add('active');
+  renderReport();
+}
+
+function getFilteredData(){
+  var month=document.getElementById('rpt-month').value;
+  var year=document.getElementById('rpt-year').value;
+  function filterFn(x){
+    if(month&&x.date.slice(0,7)!==month)return false;
+    if(year&&x.date.slice(0,4)!==year)return false;
+    return true;
+  }
+  return{inc:income.filter(filterFn),exp:expenses.filter(filterFn)};
+}
+
+function renderReport(){
+  populateFilters();
+  var fd=getFilteredData();
+  var inc=fd.inc, exp=fd.exp;
+  var totalInc=inc.reduce(function(a,x){return a+x.amount},0);
+  var totalExp=exp.reduce(function(a,x){return a+x.amount},0);
+  var profit=totalInc-totalExp;
+  var el=document.getElementById('report-content');
+
+  if(reportTab==='summary'){
+    var catInc={},catExp={};
+    inc.forEach(function(x){catInc[x.category]=(catInc[x.category]||0)+x.amount});
+    exp.forEach(function(x){catExp[x.category]=(catExp[x.category]||0)+x.amount});
+    var incRows=Object.entries(catInc).length?Object.entries(catInc).map(function(kv){return rowHtml(kv[0],fmt(kv[1]),'var(--success)')}).join(''):'<p style="color:var(--text3);font-size:13px">ບໍ່ມີຂໍ້ມູນ</p>';
+    var expRows=Object.entries(catExp).length?Object.entries(catExp).map(function(kv){return rowHtml(kv[0],fmt(kv[1]),'var(--danger)')}).join(''):'<p style="color:var(--text3);font-size:13px">ບໍ່ມີຂໍ້ມູນ</p>';
+    el.innerHTML=
+      '<div class="card" style="margin-bottom:12px">'+
+        '<div class="section-label" style="margin-top:0">ສະຫຼຸບການເງິນ</div>'+
+        '<div style="display:flex;flex-direction:column;gap:10px">'+
+          rowHtml('ລາຍຮັບລວມ',fmt(totalInc),'var(--success)')+
+          rowHtml('ລາຍຈ່າຍລວມ',fmt(totalExp),'var(--danger)')+
+          '<div style="border-top:1px solid var(--border);padding-top:10px"></div>'+
+          rowHtml('ກຳໄລ / ຂາດທຶນ',fmt(profit),profit>=0?'var(--success)':'var(--danger)')+
+          rowHtml('ອັດຕາກຳໄລ',totalInc>0?((profit/totalInc)*100).toFixed(1)+'%':'N/A','')+
+        '</div>'+
+      '</div>'+
+      '<div class="card" style="margin-bottom:12px"><div class="section-label" style="margin-top:0">ລາຍຮັບຕາມໝວດ</div>'+incRows+'</div>'+
+      '<div class="card"><div class="section-label" style="margin-top:0">ລາຍຈ່າຍຕາມໝວດ</div>'+expRows+'</div>';
+
+  } else if(reportTab==='income'){
+    var incSorted=inc.slice().sort(function(a,b){return b.date.localeCompare(a.date)});
+    var hdr='ຈຳນວນ'+(totalInc?' (ລວມ: '+fmt(totalInc)+')':'');
+    el.innerHTML=tableHTML(incSorted,['ວັນທີ','ລາຍລະອຽດ','ໝວດ',hdr],function(x){return[fmtDate(x.date),x.description,x.category,fmt(x.amount)]},inc.length===0,'ບໍ່ມີລາຍຮັບໃນຊ່ວງທີ່ເລືອກ');
+
+  } else if(reportTab==='expense'){
+    var expSorted=exp.slice().sort(function(a,b){return b.date.localeCompare(a.date)});
+    var hdrE='ຈຳນວນ'+(totalExp?' (ລວມ: '+fmt(totalExp)+')':'');
+    el.innerHTML=tableHTML(expSorted,['ວັນທີ','ລາຍລະອຽດ','ໝວດ',hdrE],function(x){return[fmtDate(x.date),x.description,x.category,fmt(x.amount)]},exp.length===0,'ບໍ່ມີລາຍຈ່າຍໃນຊ່ວງທີ່ເລືອກ');
+
+  } else if(reportTab==='products'){
+    var prodSorted=products.slice().sort(function(a,b){return a.name.localeCompare(b.name)});
+    el.innerHTML=tableHTML(prodSorted,['ຊື່','ລະຫັດ','ໝວດ','ທຶນ','ຂາຍ','ຈຳນວນ','ມູນຄ່າ'],function(x){return[x.name,x.sku||'-',x.category,fmt(x.cost),fmt(x.price),x.stock+' '+x.unit,fmt(x.cost*x.stock)]},products.length===0,'ຍັງບໍ່ມີສິນຄ້າ');
+  }
+}
+
+function rowHtml(label,val,color){
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0">'+
+    '<span style="color:var(--text2);font-size:13px">'+label+'</span>'+
+    '<span style="font-weight:700;color:'+(color||'var(--text)')+'">'+val+'</span>'+
+  '</div>';
+}
+
+function tableHTML(data,headers,rowFn,empty,emptyMsg){
+  if(empty)return '<div class="empty"><i class="ti ti-table"></i><p>'+emptyMsg+'</p></div>';
+  var ths=headers.map(function(h){return '<th style="text-align:left;padding:8px 6px;border-bottom:2px solid var(--border);white-space:nowrap;color:var(--text2);font-size:10px">'+h+'</th>'}).join('');
+  var rows=data.map(function(x){
+    return '<tr>'+rowFn(x).map(function(c){return '<td style="padding:7px 6px;border-bottom:1px solid var(--border);white-space:nowrap;font-size:12px">'+c+'</td>'}).join('')+'</tr>';
+  }).join('');
+  return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr>'+ths+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+function exportExcel(){
+  var fd=getFilteredData();
+  var inc=fd.inc, exp=fd.exp;
+  var wb=XLSX.utils.book_new();
+  var totalInc=inc.reduce(function(a,x){return a+x.amount},0);
+  var totalExp=exp.reduce(function(a,x){return a+x.amount},0);
+  var sumData=[
+    ['ShopFinance - ລາຍງານການເງິນ'],
+    ['ສ້າງວັນທີ:',new Date().toLocaleString()],
+    [],
+    ['ສະຫຼຸບ'],
+    ['ລາຍຮັບລວມ',totalInc],
+    ['ລາຍຈ່າຍລວມ',totalExp],
+    ['ກຳໄລສຸດທິ',totalInc-totalExp],
+    ['ອັດຕາກຳໄລ %',totalInc>0?Number(((totalInc-totalExp)/totalInc*100).toFixed(2)):0]
+  ];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sumData),'ສະຫຼຸບ');
+  var incRows=[['ວັນທີ','ລາຍລະອຽດ','ໝວດ','ຈຳນວນ (₭)','ໝາຍເຫດ']].concat(inc.map(function(x){return[x.date,x.description,x.category,x.amount,x.note]}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(incRows),'ລາຍຮັບ');
+  var expRows=[['ວັນທີ','ລາຍລະອຽດ','ໝວດ','ຈຳນວນ (₭)','ໝາຍເຫດ']].concat(exp.map(function(x){return[x.date,x.description,x.category,x.amount,x.note]}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(expRows),'ລາຍຈ່າຍ');
+  var prodRows=[['ຊື່','ລະຫັດ','ໝວດ','ລາຄາທຶນ (₭)','ລາຄາຂາຍ (₭)','ຈຳນວນ','ໜ່ວຍ','ແຈ້ງເຕືອນ','ມູນຄ່າສາງ (₭)']].concat(products.map(function(x){return[x.name,x.sku,x.category,x.cost,x.price,x.stock,x.unit,x.minStock,x.cost*x.stock]}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(prodRows),'ສິນຄ້າ');
+  XLSX.writeFile(wb,'ShopFinance_'+today()+'.xlsx');
+}
+
+function exportPDF(){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF();
+  var fd=getFilteredData();
+  var inc=fd.inc, exp=fd.exp;
+  var totalInc=inc.reduce(function(a,x){return a+x.amount},0);
+  var totalExp=exp.reduce(function(a,x){return a+x.amount},0);
+  var profit=totalInc-totalExp;
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('ShopFinance - ລາຍງານການເງິນ',14,18);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text('ສ້າງວັນທີ: '+new Date().toLocaleString(),14,26);
+  doc.line(14,29,196,29);
+  doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text('ສະຫຼຸບ',14,38);
+  doc.autoTable({startY:42,head:[['ລາຍການ','ຈຳນວນ']],body:[
+    ['ລາຍຮັບລວມ','\u20AD'+totalInc.toLocaleString()],
+    ['ລາຍຈ່າຍລວມ','\u20AD'+totalExp.toLocaleString()],
+    ['ກຳໄລ / ຂາດທຶນ','\u20AD'+profit.toLocaleString()],
+    ['ອັດຕາກຳໄລ',(totalInc>0?((profit/totalInc)*100).toFixed(1):0)+'%']
+  ],margin:{left:14},styles:{fontSize:10},headStyles:{fillColor:[37,99,235]}});
+  if(inc.length){
+    doc.addPage();doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text('ລາຍຮັບ',14,16);
+    doc.autoTable({startY:20,head:[['ວັນທີ','ລາຍລະອຽດ','ໝວດ','ຈຳນວນ (₭)']],body:inc.map(function(x){return[x.date,x.description,x.category,'\u20AD'+x.amount.toLocaleString()]}),margin:{left:14},styles:{fontSize:9},headStyles:{fillColor:[22,163,74]}});
+  }
+  if(exp.length){
+    doc.addPage();doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text('ລາຍຈ່າຍ',14,16);
+    doc.autoTable({startY:20,head:[['ວັນທີ','ລາຍລະອຽດ','ໝວດ','ຈຳນວນ (₭)']],body:exp.map(function(x){return[x.date,x.description,x.category,'\u20AD'+x.amount.toLocaleString()]}),margin:{left:14},styles:{fontSize:9},headStyles:{fillColor:[220,38,38]}});
+  }
+  if(products.length){
+    doc.addPage();doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text('ສິນຄ້າ',14,16);
+    doc.autoTable({startY:20,head:[['ຊື່','ລະຫັດ','ໝວດ','ທຶນ','ຂາຍ','ຈຳນວນ','ມູນຄ່າ']],body:products.map(function(x){return[x.name,x.sku||'-',x.category,'\u20AD'+x.cost,'\u20AD'+x.price,x.stock+' '+x.unit,'\u20AD'+(x.cost*x.stock).toLocaleString()]}),margin:{left:14},styles:{fontSize:8},headStyles:{fillColor:[37,99,235]}});
+  }
+  doc.save('ShopFinance_'+today()+'.pdf');
+}
+
+function seedDemo(){
+  if(income.length||expenses.length||products.length)return;
+  function d(n){var dt=new Date();dt.setDate(dt.getDate()-n);return dt.toISOString().slice(0,10)}
+  income=[
+    {id:uid(),description:'ຍອດຂາຍປະຈຳວັນ',amount:4500000,category:'ຂາຍສິນຄ້າ',date:d(0),note:''},
+    {id:uid(),description:'ຄຳສັ່ງຂາຍສ່ງ - ບໍລິສັດ ABC',amount:12000000,category:'ຂາຍສິນຄ້າ',date:d(2),note:''},
+    {id:uid(),description:'ຄ່າບໍລິການຂົນສົ່ງ',amount:800000,category:'ໃຫ້ບໍລິການ',date:d(5),note:''},
+    {id:uid(),description:'ຍອດຂາຍປະຈຳວັນ',amount:3800000,category:'ຂາຍສິນຄ້າ',date:d(7),note:''},
+    {id:uid(),description:'ຍອດຂາຍປະຈຳວັນ',amount:5200000,category:'ຂາຍສິນຄ້າ',date:d(14),note:''},
+    {id:uid(),description:'ລາຍໄດ້ຈາກການເຊົ່າສາງ',amount:6000000,category:'ໃຫ້ເຊົ່າ',date:d(30),note:''},
+    {id:uid(),description:'ຄຳສັ່ງຂາຍສ່ງ',amount:9500000,category:'ຂາຍສິນຄ້າ',date:d(35),note:''},
+    {id:uid(),description:'ຍອດຂາຍປະຈຳວັນ',amount:4100000,category:'ຂາຍສິນຄ້າ',date:d(40),note:''}
+  ];
+  expenses=[
+    {id:uid(),description:'ຊຳລະໃຫ້ຜູ້ສະໜອງ - ຟາມສົດ',amount:8000000,category:'ຊື້ສິນຄ້າ',date:d(1),note:''},
+    {id:uid(),description:'ເງິນເດືອນພະນັກງານ',amount:15000000,category:'ເງິນເດືອນ',date:d(3),note:''},
+    {id:uid(),description:'ຄ່າໄຟຟ້າ',amount:2200000,category:'ສາທາລະນູປະໂພກ',date:d(6),note:''},
+    {id:uid(),description:'ຄ່າເຊົ່າຮ້ານ',amount:12000000,category:'ຄ່າເຊົ່າ',date:d(10),note:''},
+    {id:uid(),description:'ໂຄສະນາ Facebook',amount:1500000,category:'ໂຄສະນາ',date:d(12),note:''},
+    {id:uid(),description:'ຊຳລະໃຫ້ຜູ້ສະໜອງ - ສາງເຢັນ',amount:5500000,category:'ຊື້ສິນຄ້າ',date:d(20),note:''},
+    {id:uid(),description:'ອຸປະກອນຫຸ້ມຫໍ່',amount:900000,category:'ອຸປະກອນ',date:d(25),note:''},
+    {id:uid(),description:'ນ້ຳມັນລົດ',amount:600000,category:'ຂົນສົ່ງ',date:d(28),note:''}
+  ];
+  products=[
+    {id:uid(),name:'ກາເຟ Arabica 500g',sku:'COF-001',category:'ອາຫານ ແລະ ເຄື່ອງດື່ມ',cost:150000,price:280000,stock:45,minStock:10,unit:'ຖົງ'},
+    {id:uid(),name:'ຊາຂຽວ Premium',sku:'TEA-001',category:'ອາຫານ ແລະ ເຄື່ອງດື່ມ',cost:80000,price:150000,stock:3,minStock:5,unit:'ກ່ອງ'},
+    {id:uid(),name:'ສໍາມຸດ A5',sku:'OFF-001',category:'ຫ້ອງການ',cost:25000,price:55000,stock:120,minStock:20,unit:'ອັນ'},
+    {id:uid(),name:'ຊຸດປາກກາ',sku:'OFF-002',category:'ຫ້ອງການ',cost:15000,price:35000,stock:0,minStock:10,unit:'ຊຸດ'},
+    {id:uid(),name:'ເຈວລ້າງມືຂະໜາດ 500ml',sku:'CLN-001',category:'ເຄື່ອງທຳຄວາມສະອາດ',cost:45000,price:89000,stock:28,minStock:10,unit:'ຂວດ'}
+  ];
+  save();
+}
+
+seedDemo();
+renderDashboard();
+populateFilters();
+</script>
+</body>
+</html>
