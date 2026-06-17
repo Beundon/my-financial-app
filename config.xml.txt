@@ -1,16 +1,17 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.yourname.myapp" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <name>My HTML App</name>
+<widget id="com.shopfinance.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>ShopFinance</name>
     
-    <description>ແອັບມືຖືທຳອິດຂອງຂ້ອຍ</description>
+    <description>ແອັບຈັດການລາຍຮັບ-ລາຍຈ່າຍ ແລະ ຄັງສິນຄ້າ</description>
     
-    <author email="your-email@example.com" href="http://example.com">
-        Your Name
+    <author email="berndvh015@gmail.com" href="https://github.com">
+        Beun Donsavanh
     </author>
     
-    <content src="index.html" />
+    <content src="Index.html" />
     
     <access origin="*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
+    <allow-navigation href="*" />
 </widget>
