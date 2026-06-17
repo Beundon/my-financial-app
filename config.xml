@@ -9,7 +9,7 @@
         Beun Donsavanh
     </author>
     
-    <content src="Index.html" />
+    <content src="index.html" />
     
     <access origin="*" />
     <allow-intent href="http://*/*" />
